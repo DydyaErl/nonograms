@@ -278,4 +278,41 @@ constructor(size = 5)
       }
     ]
   };
+  this.currentTemplate = null;
+  this.grid = null;
+  this.startTime = null;
+  this.timer = null;
+  this.sounds = {
+    mark: new Audio('./assets/on-or-off-light-switch-tap-2585.wav'),
+    unmark: new Audio('./assets/typewriter-soft-click-1125.wav'),
+    cross: new Audio('./assets/interface-device-click-2577.wav'),
+    win: new Audio('./assets/quick-win-video-game-notification-269.wav')
+  };
+  this.theme = localStorage.getItem('nonogram-theme') || 'light';
+  this.soundEnabled = localStorage.getItem('nonogram-sound') !== 'false';
+  this.winResults = JSON.parse(localStorage.getItem('nonogram-results') || '[]');
+
+  // Try to load saved game state
+  const savedState = JSON.parse(localStorage.getItem('nonogram-state') || 'null');
+  if (savedState) {
+    this.size = savedState.size;
+    this.currentTemplate = savedState.template;
+    this.grid = savedState.grid;
+    this.startTime = savedState.startTime;
+  }
+  this.initGame();
+}
+
+initGame(size = 5, templateIndex = 0)
+{
+  this.size = size;
+  this.currentTemplate = this.templates[size][templateIndex];
+  this.grid = Array(size).fill().map(() => Array(size).fill(0));
+  this.createGameUI();
+
+  // Устанавливаем правильное значение в select после создания UI
+  const templateSelect = document.querySelector('#game-controls select:nth-child(2)');
+  if (templateSelect) {
+    templateSelect.value = templateIndex;
+  }
 }
