@@ -315,4 +315,46 @@ initGame(size = 5, templateIndex = 0)
   if (templateSelect) {
     templateSelect.value = templateIndex;
   }
+  // Устанавливаем правильное значение для размера сетки
+  const levelSelect = document.querySelector('#game-controls select:first-child');
+  if (levelSelect) {
+    levelSelect.value = size.toString();
+  }
+
+  this.resetGame();
+}
+
+createGameUI()
+{
+  const gameContainer = document.createElement('div');
+  gameContainer.id = 'game-container';
+
+  // Game controls
+  const gameControls = document.createElement('div');
+  gameControls.id = 'game-controls';
+
+  const levelSelect = document.createElement('select');
+  levelSelect.innerHTML = `
+            <option value="5">Easy (5x5)</option>
+            <option value="10">Medium (10x10)</option>
+            <option value="15">Hard (15x15)</option>
+        `;
+  levelSelect.addEventListener('change', (e) => {
+    this.initGame(parseInt(e.target.value));
+  });
+
+  const templateSelect = document.createElement('select');
+  this.templates[this.size].forEach((template, index) => {
+    const option = document.createElement('option');
+    option.value = index;
+    option.textContent = template.name;
+    templateSelect.appendChild(option);
+  });
+  templateSelect.addEventListener('change', (e) => {
+    this.initGame(this.size, parseInt(e.target.value));
+  });
+
+  const resetButton = document.createElement('button');
+  resetButton.textContent = 'Reset Game';
+  resetButton.addEventListener('click', () => this.resetGame());
 }
