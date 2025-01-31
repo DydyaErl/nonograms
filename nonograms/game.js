@@ -357,4 +357,86 @@ createGameUI()
   const resetButton = document.createElement('button');
   resetButton.textContent = 'Reset Game';
   resetButton.addEventListener('click', () => this.resetGame());
+
+
+  // Sound toggle
+  const soundToggle = document.createElement('button');
+  soundToggle.textContent = `Sound ${this.soundEnabled ? 'Off' : 'On'}`;
+  soundToggle.addEventListener('click', () => this.toggleSound());
+
+  // Random game button
+  const randomButton = document.createElement('button');
+  randomButton.textContent = 'Random Game';
+  randomButton.onclick = () => {
+    const sizes = [5, 10, 15];
+    const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+    const templates = this.templates[randomSize];
+    const randomTemplate = Math.floor(Math.random() * templates.length);
+    this.initGame(randomSize, randomTemplate);
+  };
+
+  // Solution button
+  const solutionButton = document.createElement('button');
+  solutionButton.textContent = 'Show Solution';
+  solutionButton.addEventListener('click', () => this.showSolution());
+
+  // Continue last game button
+  const continueButton = document.createElement('button');
+  continueButton.textContent = 'Continue Last Game';
+  continueButton.style.display = localStorage.getItem('nonogram-state') ? 'block' : 'none';
+  continueButton.addEventListener('click', () => this.continueLastGame());
+
+  gameControls.append(levelSelect, templateSelect, resetButton, themeToggle, soundToggle, randomButton, solutionButton, continueButton);
+
+  // Clue container
+  const clueContainer = document.createElement('div');
+  clueContainer.id = 'clue-container';
+
+  // Column clues
+  const columnCluesElement = document.createElement('div');
+  columnCluesElement.id = 'column-clues';
+  columnCluesElement.classList.add('clue-column');
+  columnCluesElement.style.display = 'grid';
+  columnCluesElement.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
+
+  this.currentTemplate.colClues.forEach(clues => {
+    const clueCell = document.createElement('div');
+    clueCell.classList.add('clue-cell');
+
+    clues.forEach(clue => {
+      const clueItem = document.createElement('span');
+      clueItem.textContent = clue;
+      clueCell.appendChild(clueItem);
+    });
+
+    // Добавляем правую границу каждые 5 клеток, кроме последней колонки
+    const index = columnCluesElement.children.length;
+    if ((index + 1) % 5 === 0 && index < this.size - 1) {
+      clueCell.style.borderRight = '3px solid black';
+    }
+
+    columnCluesElement.appendChild(clueCell);
+  });
+
+
+  // Row clues
+  const rowCluesElement = document.createElement('div');
+  rowCluesElement.id = 'row-clues';
+  rowCluesElement.classList.add('clue-row');
+  rowCluesElement.style.display = 'grid';
+  rowCluesElement.style.gridTemplateRows = `repeat(${this.size}, 1fr)`;
+
+  this.currentTemplate.rowClues.forEach(clues => {
+    const clueCell = document.createElement('div');
+    clueCell.classList.add('clue-cell');
+    clueCell.textContent = clues.join(' ');
+
+    // Добавляем нижнюю границу каждые 5 строк, кроме последней строки
+    const index = rowCluesElement.children.length;
+    if ((index + 1) % 5 === 0 && index < this.size - 1) {
+      clueCell.style.borderBottom = '3px solid black';
+    }
+
+    rowCluesElement.appendChild(clueCell);
+  });
 }
