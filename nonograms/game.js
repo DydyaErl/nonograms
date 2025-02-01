@@ -439,4 +439,99 @@ createGameUI()
 
     rowCluesElement.appendChild(clueCell);
   });
+
+
+  // Grid
+  const gridElement = document.createElement('div');
+  gridElement.id = 'nonogram-grid';
+  gridElement.style.gridTemplateColumns = `repeat(${this.size}, 1fr)`;
+
+  for (let row = 0; row < this.size; row++) {
+    for (let col = 0; col < this.size; col++) {
+      const cell = document.createElement('div');
+      cell.classList.add('grid-cell');
+      cell.dataset.row = row;
+      cell.dataset.col = col;
+
+      cell.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        if (e.button === 0) this.markCell(row, col);
+        else if (e.button === 2) this.crossCell(row, col);
+      });
+
+      // Добавляем правую границу каждые 5 клеток, кроме последней колонки
+      if ((col + 1) % 5 === 0 && col < this.size - 1) {
+        cell.style.borderRight = '3px solid black';
+      }
+
+      // Добавляем нижнюю границу каждые 5 строк, кроме последней строки
+      if ((row + 1) % 5 === 0 && row < this.size - 1) {
+        cell.style.borderBottom = '3px solid black';
+      }
+
+      gridElement.appendChild(cell);
+    }
+  }
+
+  // Game message
+  const gameMessage = document.createElement('div');
+  gameMessage.id = 'game-message';
+
+  // Изменяем порядок добавления элементов в clueContainer
+  clueContainer.append(rowCluesElement, columnCluesElement, gridElement);
+
+  // Assemble all elements
+  gameContainer.append(gameControls, clueContainer, gameMessage);
+
+  // Clear previous content and add new game UI
+  document.body.innerHTML = '';
+  document.body.appendChild(gameContainer);
+
+  // Prevent context menu
+  document.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+markCell(row, col) {
+  const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
+
+  // Start timer on first click
+  if (!this.startTime) {
+    this.startTime = new Date();
+    this.startTimer();
+  }
+
+  if (cell.classList.contains('black')) {
+    cell.classList.remove('black');
+    this.grid[row][col] = 0;
+    if (this.soundEnabled) this.sounds.unmark.play();
+  } else {
+    cell.classList.remove('x-mark');
+    cell.classList.add('black');
+    this.grid[row][col] = 1;
+    if (this.soundEnabled) this.sounds.mark.play();
+  }
+
+  this.saveGameState();
+  this.checkGameCompletion();
+}
+
+crossCell(row, col) {
+  const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
+
+  if (cell.classList.contains('black')) return;
+
+  cell.classList.toggle('x-mark');
+  if (this.soundEnabled) this.sounds.cross.play();
+}
+
+resetGame()
+{
+  // Reset grid
+  this.grid = Array(this.size).fill().map(() => Array(this.size).fill(0));
+
+  // Clear grid cells
+  const cells = document.querySelectorAll('.grid-cell');
+  cells.forEach(cell => {
+    cell.classList.remove('black', 'x-mark');
+  });
 }
