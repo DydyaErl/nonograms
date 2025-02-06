@@ -251,9 +251,6 @@ class NonogramGame {
           ],
           rowClues: [[1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]],
           colClues: [[1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15]]
-
-
-
         },
         {
           name: 'Lighthouse',
@@ -293,13 +290,14 @@ class NonogramGame {
     this.soundEnabled = localStorage.getItem('nonogram-sound') !== 'false';
     this.winResults = JSON.parse(localStorage.getItem('nonogram-results') || '[]');
 
-    // Try to load saved game state
+    // Загрузка сохраненной игры
     const savedState = JSON.parse(localStorage.getItem('nonogram-state') || 'null');
     if (savedState) {
       this.size = savedState.size;
       this.currentTemplate = savedState.template;
       this.grid = savedState.grid;
-      this.startTime = savedState.startTime;
+      this.startTime = new Date(savedState.startTime); // Преобразуем строку в Date
+      this.markedCells = savedState.markedCells || []; // Сохраняем отмеченные X клетки
     }
     this.initGame();
   }
@@ -390,7 +388,16 @@ class NonogramGame {
     continueButton.style.display = localStorage.getItem('nonogram-state') ? 'block' : 'none';
     continueButton.addEventListener('click', () => this.continueLastGame());
 
-    gameControls.append(levelSelect, templateSelect, resetButton, themeToggle, soundToggle, randomButton, solutionButton, continueButton);
+    gameControls.append(
+      levelSelect, 
+      templateSelect, 
+      resetButton, 
+      themeToggle, 
+      soundToggle, 
+      randomButton, 
+      solutionButton, 
+      continueButton
+    );
 
     // Clue container
     const clueContainer = document.createElement('div');
@@ -480,13 +487,62 @@ class NonogramGame {
     const gameMessage = document.createElement('div');
     gameMessage.id = 'game-message';
 
-    // Изменяем порядок добавления элементов в clueContainer
+    // Добавляем таблицу результатов
+    const resultsTable = document.createElement('div');
+    resultsTable.id = 'results-table';
+    resultsTable.innerHTML = `
+      <h3>Top 5 Results</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>Template</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Array(5).fill(null).map((_, index) => {
+            const result = this.winResults[index];
+            return result ? `
+              <tr>
+                <td>${result.size}x${result.size}</td>
+                <td>${result.template}</td>
+                <td>${Math.floor(result.time / 60)}:${(result.time % 60).toString().padStart(2, '0')}</td>
+              </tr>
+            ` : `
+              <tr>
+                <td class="empty-cell">-</td>
+                <td class="empty-cell">-</td>
+                <td class="empty-cell">-</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Создаем контейнер для игрового поля и таблицы результатов
+    const gameAndResults = document.createElement('div');
+    gameAndResults.className = 'game-and-results';
+
+    // Создаем контейнер для игровой области
+    const gameArea = document.createElement('div');
+    gameArea.id = 'game-area';
+
+    // Добавляем clueContainer в gameArea
     clueContainer.append(rowCluesElement, columnCluesElement, gridElement);
+    gameArea.appendChild(clueContainer);
 
-    // Assemble all elements
-    gameContainer.append(gameControls, clueContainer, gameMessage);
+    // Добавляем игровую область и таблицу результатов в общий контейнер
+    gameAndResults.appendChild(gameArea);
+    gameAndResults.appendChild(resultsTable);
 
-    // Clear previous content and add new game UI
+    // Собираем все элементы
+    gameContainer.appendChild(gameControls);
+    gameContainer.appendChild(gameAndResults);
+    gameContainer.appendChild(gameMessage);
+
+    // Очищаем body и добавляем новый UI
     document.body.innerHTML = '';
     document.body.appendChild(gameContainer);
 
@@ -514,6 +570,7 @@ class NonogramGame {
       if (this.soundEnabled) this.sounds.mark.play();
     }
 
+    // Сохраняем состояние после каждого хода
     this.saveGameState();
     this.checkGameCompletion();
   }
@@ -525,6 +582,9 @@ class NonogramGame {
 
     cell.classList.toggle('x-mark');
     if (this.soundEnabled) this.sounds.cross.play();
+
+    // Сохраняем состояние после каждой отметки X
+    this.saveGameState();
   }
 
   resetGame() {
@@ -547,6 +607,11 @@ class NonogramGame {
     const timerElement = document.createElement('div');
     timerElement.id = 'game-timer';
     document.getElementById('game-controls').appendChild(timerElement);
+
+    // Очищаем предыдущий таймер, если он был
+    if (this.timer) {
+      clearInterval(this.timer);
+    }
 
     this.timer = setInterval(() => {
       const currentTime = new Date();
@@ -571,7 +636,7 @@ class NonogramGame {
     clearInterval(this.timer);
     const elapsedSeconds = Math.floor((new Date() - this.startTime) / 1000);
 
-    // Save win result only if solution button wasn't used
+
     if (!this.solutionUsed) {
       this.saveWinResult(elapsedSeconds);
     }
@@ -590,24 +655,57 @@ class NonogramGame {
       size: this.size,
       template: this.currentTemplate,
       grid: this.grid,
-      startTime: this.startTime
+      startTime: this.startTime?.toISOString(),
+      markedCells: Array.from(document.querySelectorAll('.grid-cell.x-mark'))
+        .map(cell => ({
+          row: parseInt(cell.dataset.row),
+          col: parseInt(cell.dataset.col)
+        })),
+      elapsedTime: this.startTime ? Math.floor((new Date() - this.startTime) / 1000) : 0
     };
     localStorage.setItem('nonogram-state', JSON.stringify(state));
   }
 
   saveWinResult(timeSeconds) {
-    this.winResults.push({
-      size: this.size,
-      template: this.currentTemplate.name,
-      time: timeSeconds,
-      date: new Date().toISOString()
-    });
-
-    // Keep only top 5 results, sorted by time
-    this.winResults.sort((a, b) => a.time - b.time);
-    this.winResults = this.winResults.slice(0, 5);
-
-    localStorage.setItem('nonogram-results', JSON.stringify(this.winResults));
+    // Добавляем новый результат только если не использовалась кнопка решения
+    if (!this.solutionUsed) {
+      this.winResults.push({
+        size: this.size,
+        template: this.currentTemplate.name,
+        time: timeSeconds,
+        date: new Date().toISOString()
+      });
+      
+      // Сортировка по времени
+      this.winResults.sort((a, b) => a.time - b.time);
+      
+      // Оставляем только 5 лучших результатов
+      this.winResults = this.winResults.slice(0, 5);
+      
+      // Сохраняем в localStorage
+      localStorage.setItem('nonogram-results', JSON.stringify(this.winResults));
+      
+      // Обновляем таблицу результатов
+      const resultsTable = document.getElementById('results-table');
+      if (resultsTable) {
+        resultsTable.querySelector('tbody').innerHTML = Array(5).fill(null).map((_, index) => {
+          const result = this.winResults[index];
+          return result ? `
+            <tr>
+              <td>${result.size}x${result.size}</td>
+              <td>${result.template}</td>
+              <td>${Math.floor(result.time / 60)}:${(result.time % 60).toString().padStart(2, '0')}</td>
+            </tr>
+          ` : `
+            <tr>
+              <td class="empty-cell">-</td>
+              <td class="empty-cell">-</td>
+              <td class="empty-cell">-</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
   }
 
   toggleTheme() {
@@ -647,8 +745,13 @@ class NonogramGame {
 
       this.size = savedState.size;
       this.currentTemplate = savedState.template;
-      this.grid = savedState.grid;
-      this.startTime = savedState.startTime;
+      this.grid = savedState.grid.map(row => [...row]); // Создаем глубокую копию сетки
+      
+      // Восстанавливаем время
+      if (savedState.startTime) {
+        const savedElapsedTime = savedState.elapsedTime || 0;
+        this.startTime = new Date(Date.now() - savedElapsedTime * 1000);
+      }
 
       // Обновляем UI с правильным индексом шаблона
       this.initGame(this.size, templateIndex);
@@ -658,13 +761,34 @@ class NonogramGame {
 
   loadSavedGrid() {
     const cells = document.querySelectorAll('.grid-cell');
+    const savedState = JSON.parse(localStorage.getItem('nonogram-state'));
+
+    if (!savedState) return;
+
     cells.forEach((cell, index) => {
       const row = Math.floor(index / this.size);
       const col = index % this.size;
-      if (this.grid[row][col]) {
+      
+      // Восстанавливаем черные клетки
+      if (savedState.grid[row][col] === 1) {
         cell.classList.add('black');
       }
+      
+      // Восстанавливаем отмеченные X клетки
+      if (savedState.markedCells) {
+        const isMarked = savedState.markedCells.some(
+          marked => marked.row === row && marked.col === col
+        );
+        if (isMarked) {
+          cell.classList.add('x-mark');
+        }
+      }
     });
+
+    // Восстанавливаем таймер с правильного момента
+    if (this.startTime) {
+      this.startTimer();
+    }
   }
 }
 
