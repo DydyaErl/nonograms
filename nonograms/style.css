@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Roboto+Mono:wght@500&display=swap');
+
 :root {
   --cell-size: 50px;
   --grid-background: #f0f0f0;
@@ -8,20 +10,24 @@
   --text-color: #000000;
   --cell-filled: var(--black-cell);
   --cell-hover: #e0e0e0;
+  --accent-color: #4a90e2;
+  --button-hover: #357abd;
 }
 
 body.dark-theme {
-  --bg-color: #222222;
+  --bg-color: #1a1a1a;
   --text-color: #ffffff;
-  --grid-background: #333333;
+  --grid-background: #2d2d2d;
   --cell-border: #444444;
   --black-cell: #ffffff;
   --x-cell: #aaaaaa;
-  --cell-hover: #444444;
+  --cell-hover: #3d3d3d;
+  --accent-color: #5c9ee6;
+  --button-hover: #4a90e2;
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -29,6 +35,7 @@ body {
   margin: 0;
   background-color: var(--bg-color);
   color: var(--text-color);
+  transition: background-color 0.3s ease;
 }
 
 #game-container {
@@ -39,8 +46,12 @@ body {
 
 #game-controls {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 25px;
+  padding: 15px;
+  background: var(--grid-background);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 #nonogram-grid {
@@ -56,6 +67,9 @@ body {
   grid-template-rows: auto 1fr;
   gap: 0;
   border: 2px solid var(--cell-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .clue-row, .clue-column {
@@ -76,15 +90,16 @@ body {
   border: 1px solid var(--cell-border);
   background-color: #e8e8e8;
   color: var(--text-color);
-  font-size: 11px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 500;
   box-sizing: border-box;
   padding: 0 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   transition: width 0.2s ease;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
+  font-family: 'Roboto Mono', monospace;
 }
 
 body.dark-theme .clue-cell {
@@ -129,10 +144,12 @@ body.dark-theme .clue-cell {
   background-color: var(--bg-color);
   cursor: pointer;
   box-sizing: border-box;
+  transition: background-color 0.2s ease;
 }
 
 .grid-cell:hover {
   background-color: var(--cell-hover);
+  transform: scale(1.02);
 }
 
 .grid-cell.black {
@@ -169,36 +186,47 @@ body.dark-theme .clue-cell {
 }
 
 #game-message {
-  margin-top: 20px;
+  margin-top: 25px;
   font-size: 1.2em;
+  font-weight: 500;
+  color: var(--accent-color);
   text-align: center;
-  color: var(--text-color);
 }
 
 #game-timer {
-  color: var(--text-color);
-  margin: 10px 0;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1.1em;
+  color: var(--accent-color);
+  margin: 15px 0;
+  text-align: center;
 }
 
 #game-controls button {
-  padding: 8px 16px;
-  margin: 4px;
-  border: 1px solid var(--cell-border);
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--accent-color);
+  color: white;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 #game-controls button:hover {
-  background-color: var(--cell-hover);
+  background-color: var(--button-hover);
+  transform: translateY(-1px);
 }
 
 #game-controls select {
-  padding: 8px;
-  margin: 4px;
-  border: 1px solid var(--cell-border);
+  padding: 8px 12px;
+  border: 2px solid var(--accent-color);
+  border-radius: 6px;
   background-color: var(--bg-color);
   color: var(--text-color);
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  outline: none;
 }
 
 @media screen and (max-width: 600px) {
@@ -225,19 +253,20 @@ body.dark-theme .clue-cell {
 
 #results-table {
   margin-left: 20px;
-  padding: 10px;
-  background-color: var(--bg-color);
-  border: 1px solid var(--cell-border);
-  border-radius: 5px;
+  padding: 15px;
+  background: var(--grid-background);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   width: 250px;
   height: fit-content;
 }
 
 #results-table h3 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 15px;
   text-align: center;
-  margin-bottom: 10px;
-  color: var(--text-color);
-  font-size: 16px;
 }
 
 #results-table table {
@@ -247,12 +276,14 @@ body.dark-theme .clue-cell {
 }
 
 #results-table td {
-  padding: 6px;
+  padding: 8px;
   text-align: center;
   border: 1px solid var(--cell-border);
   color: var(--text-color);
   font-size: 14px;
   min-width: 60px; /* Минимальная ширина для ячеек */
+  font-family: 'Roboto Mono', monospace;
+  transition: background-color 0.2s ease;
 }
 
 /* Стиль для пустых ячеек */
@@ -266,12 +297,18 @@ body.dark-theme .clue-cell {
 }
 
 #results-table th {
-  background-color: var(--grid-background);
-  font-weight: bold;
+  background-color: var(--accent-color);
+  font-weight: 500;
+  padding: 10px;
+  color: white;
 }
 
 #results-table tr:nth-child(even) {
   background-color: var(--grid-background);
+}
+
+#results-table tr:hover td {
+  background-color: var(--cell-hover);
 }
 
 /* Медиа-запрос для мобильных устройств */
